@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, shrink-to-fit=no, initial-scale=1">
+    <meta name="description" content="CSE 564 : Visualization Project Assignment 2">
+    <meta name="author" content="Sanket Dige">
+
+    <title>Visualization Assignment 2</title>
+
+    <!-- Bootstrap Core CSS -->
+    
+    <link href="{{ url_for('static', filename = 'css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- <link href="css/bootstrap.min.css" rel="stylesheet"> -->
+    <link href="http://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.5.4/bootstrap-select.min.css" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename = 'css/simple-sidebar.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename = 'css/index.css') }}" rel="stylesheet">
+
+    <link href="{{ url_for('static', filename = 'data/pca_output.csv') }}">
+    <link href="{{ url_for('static', filename = 'css/index.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename = 'css/scatterplot_matrix.css') }}" rel="stylesheet">
+    <!-- <link href="css/simple-sidebar.css" rel="stylesheet">
+    <link href="css/index.css" rel="stylesheet"> -->
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+<!-- jQuery -->
+<script src="{{ url_for('static', filename = 'js/jquery.js') }}"></script>
+<!-- <script src="js/jquery.js"></script> -->
+
+<!-- Bootstrap Core JavaScript -->
+<script src="{{ url_for('static', filename = 'js/bootstrap.min.js') }}"></script>
+<!-- <script src="js/bootstrap.min.js"></script> -->
+
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+<script type="text/javascript" src="{{ url_for('static', filename = 'js/scatterchart.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename = 'js/elbow.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename = 'js/scree.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename = 'js/bar.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename = 'js/scatterplot_matrix.js') }}"></script>
+
+<!-- <script type="text/javascript" src="scatterchart.js"></script>
+<script type="text/javascript" src="elbow.js"></script>
+<script type="text/javascript" src="scree.js"></script>
+<script type="text/javascript" src="bar.js"></script> -->
+</head>
+
+<body>
+
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <ul class="sidebar-nav">
+                <li class="sidebar-brand">
+                    <a href="#">
+                        Visualization Project #2
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="show_pca()">Show pca plot</a>
+                </li>
+                <li>
+                    <a href="#" onclick="show_euclidian()">Show euclidean plot</a>
+                </li>
+                <li>
+                    <a href="#" onclick="show_correlation()">Show correlation plot</a>
+                </li>
+                <li>
+                    <a href="#" onclick="show_elbow()">Show elbow graph</a>
+                </li>
+                <li>
+                    <a href="#" onclick="show_scree()">Show Scree plot</a>
+                </li>
+                <li>
+                    <a href="#" onclick="squared_loadings()">Show Top 3 Loadings</a>
+                </li>
+                <li>
+                    <a href="#" onclick="scatter_plot_matrix()">Show Scatter Plot matrix</a>
+                </li>
+            </ul>
+        </div>
+        <!-- /#sidebar-wrapper -->
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div>
+                            <label>Select Type of Samples for the Scatter Plot:</label>
+                            <select id ="SelectType" data-style="btn-primary" onchange="changeSamples()" style="margin-left: 0.5cm">
+                              <option value="0" selected>Random Samples</option>
+                              <option value="1">Stratified Samples</option>
+                            </select>
+                        </div>
+                        <div>
+                            <h3 id="graph_name">PCA 2D ScatterPlot</h3>
+                        </div>
+                        <div class='content'>
+                          <!-- /the chart goes here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- /#page-content-wrapper -->
+
+    </div>
+    <div id="data_url" style="display: none">{{ url_for('static', filename = 'data/') }}</div>
+    <!-- /#wrapper -->
+
+    <!-- Menu Toggle Script -->
+    <!-- <script>
+    $(document).ready(function() {
+        $("#wrapper").toggleClass("toggled");
+        
+    });
+    </script> -->
+</body>
+<script type="text/javascript">
+
+var samples_id = 0;
+var plot_type = 0;
+var datafolder = document.getElementById("data_url").textContent;
+
+function changeSamples() {
+    samples_id =  parseInt(document.getElementById("SelectType").value);
+    plot();
+}
+
+function plot() {
+    switch(parseInt(plot_type)){
+        case 0:
+            // PCA
+            plot_values('pca_output.csv');
+            break;
+        case 1:
+            // EUCLIDIAN
+            plot_values('euclidean.csv');
+            break;
+        case 2:
+            // CORRELATION
+            plot_values('correlation.csv');
+            break;
+        case 3:
+            // SCATTER PLOT MATRIX
+            if(samples_id == 0)
+                plot_scatterplot('scatterplot_matrix_random.csv');
+            else
+                plot_scatterplot('scatterplot_matrix_stratified.csv');
+            break;
+        case 4:
+            // SQUARED LOADINGS
+            if(samples_id == 0)
+                plot_bar('squared_loadings_random.csv');
+            else
+                plot_bar('squared_loadings_stratified.csv');
+            break;
+        case 5:
+            // SCREE PLOT
+            if(samples_id == 0)
+                plot_scree('scree_plot_random.csv');
+            else
+                plot_scree('scree_plot_stratified.csv');
+            break;
+        default:
+            console.log("None of the above.");
+    }
+}
+
+function scatter_plot_matrix() {
+    document.getElementById('graph_name').textContent = "Scatter Plot Matrix for top 3 loaded attributes";
+    plot_type = 3;
+    plot();
+    // plot_scatterplot('scatterplot_matrix_random.csv');
+}
+
+function squared_loadings() {
+    document.getElementById('graph_name').textContent = "Squared loading of attributes";
+    plot_type = 4;
+    plot();
+    // plot_bar('squared_loadings.csv');
+}
+
+function show_elbow() {
+    document.getElementById('graph_name').textContent = "Elbow Plot for K Means Clustering";
+    plot_type = -1;
+    plot_elbow('elbow.csv');
+}
+
+function show_scree() {
+    document.getElementById('graph_name').textContent = "Scree Plot for PCA components";
+    plot_type = 5;
+    plot();
+    // plot_scree('scree_plot.csv');
+}
+
+function show_pca() {
+    //samples_id =  parseInt(document.getElementById("SelectType").value);
+    document.getElementById('graph_name').textContent = "PCA 2D ScatterPlot";
+    plot_type = 0;
+    plot();
+}
+
+function show_euclidian() {
+    //samples_id =  parseInt(document.getElementById("SelectType").value);
+    document.getElementById('graph_name').textContent = "MDS Euclidian 2D ScatterPlot";
+    plot_type = 1;
+    plot();
+}
+
+function show_correlation() {
+    //samples_id =  parseInt(document.getElementById("SelectType").value);
+    document.getElementById('graph_name').textContent = "MDS Correlation 2D ScatterPlot";
+    plot_type = 2;
+    plot();
+}
+
+// A $( document ).ready() block.
+$( document ).ready(function() {
+    plot_values('pca_output.csv');
+    $("#wrapper").toggleClass("toggled");
+});
+
+var w = 740;
+var h = 300;
+var pad = 20;
+var left_pad = 100;
+
+
+var xScale = d3.scale.linear().range([left_pad, w-pad]);
+var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+
+var yScale = d3.scale.linear().range([pad, h-pad*2]);
+var yAxis = d3.svg.axis().scale(yScale).orient("left");
+    
+var svg = d3.select("#scatter_plot")
+            .append("svg")
+            .attr("width", w)
+            .attr("height", h)
+            
+
+</script>
+</html>
